@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🍟🏋️ Snack-to-Workout Converter</title>
+
+
+
+
+<!-- html2canvas library -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+
+
+
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #131a22;
+      --text: #e9eef5;
+      --muted: #9fb0c3;
+      --accent: #7ee787;
+      --danger: #ff6b6b;
+      --card: #0f1620;
+      --chip: #1e2a37;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
+      color: var(--text); background: radial-gradient(1200px 700px at 20% -10%, #14202e 0%, var(--bg) 60%), var(--bg);
+      min-height: 100dvh; display: grid; place-items: start center; padding: 32px 16px;
+    }
+    .app {
+      width: 100%; max-width: 800px; background: var(--panel); border: 1px solid #1c2733;
+      border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.35); overflow: hidden;
+    }
+    header { padding: 20px 22px; border-bottom: 1px solid #1c2733; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
+    header .sub { color: var(--muted); font-size: 13px; }
+    main { padding: 22px; display: grid; gap: 18px; }
+    .row { display: grid; gap: 12px; }
+    @media (min-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; gap: 14px; display: grid; }
+    }
+    label { font-size: 13px; color: var(--muted); margin-bottom: 6px; display: block; }
+    input[type="text"], input[type="number"], select {
+      width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #223244;
+      background: var(--card); color: var(--text); outline: none; font-size: 15px;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      background: var(--chip); color: var(--text); padding: 8px 10px; border-radius: 999px;
+      font-size: 12px; border: 1px solid #263646; cursor: pointer; user-select: none;
+    }
+    .btn {
+      padding: 12px 16px; border-radius: 12px; border: 1px solid #234a2f; background: #163323;
+      color: var(--accent); font-weight: 700; letter-spacing: .3px; cursor: pointer;
+    }
+    .btn:active { transform: translateY(1px); }
+    .results {
+      margin-top: 2px; padding: 16px; border-radius: 14px; background: #0e1520; border: 1px solid #1a2634;
+      display: grid; gap: 14px;
+    }
+    .line { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+    .line b { font-size: 18px; }
+    .warn { color: var(--danger); font-weight: 700; }
+    .muted { color: var(--muted); }
+    footer { padding: 16px 22px 22px; color: var(--muted); font-size: 12px; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0b121b; border: 1px solid #1c2733; padding: 2px 6px; border-radius: 6px; }
+
+
+header {
+  padding: 20px 22px;
+  border-bottom: 1px solid #1c2733;
+  display: flex;
+  flex-direction: column;   /* stack icon + title */
+  align-items: center;      /* center horizontally */
+  text-align: center;
+  gap: 6px;
+}
+
+
+ /* Make Share button row match Convert button row */
+    #shareBtnWrapper {
+      margin-top: 0;
+      gap: 0;
+    }
+
+
+/* Add vertical padding above the 'Or type one (optional)' label */
+label[for="snackText"] {
+  margin-top: 12px;   /* adjust number for more/less space */
+  display: block;     /* makes sure the margin applies cleanly */
+}
+
+
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div style="font-size: 26px">🍟🏋️</div>
+      <div>
+        <h1>Snack-to-Workout Converter</h1>
+        <div class="sub">Turn guilty pleasures into sweat math. You're welcome.</div>
+      </div>
+    </header>
+
+    <main>
+      <div class="grid-2">
+        <div class="row">
+          <label for="snackSelect">Pick a snack</label>
+          <select id="snackSelect"></select>
+        </div>
+        <div class="row">
+          <label for="snackText">Or type one (optional)</label>
+          <input id="snackText" type="text" placeholder="e.g., Large fries" />
+        </div>
+      </div>
+
+
+<div class="row">
+  <label for="quantity">Quantity</label>
+  <input id="quantity" type="number" min="1" value="1" />
+</div>
+
+
+      <div class="grid-2">
+        <div class="row">
+          <label for="calInput">Calories (override if needed)</label>
+          <input id="calInput" type="number" min="0" step="1" placeholder="auto-fills when you pick a snack" />
+        </div>
+        <div class="row">
+          <label>&nbsp;</label>
+          <button class="btn" id="convertBtn">Convert 🔥</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Quick picks</label>
+        <div class="chips" id="quickChips"></div>
+      </div>
+
+      <div class="results" id="results" hidden>
+        <div id="summary" class="line"></div>
+        <div id="equivalents"></div>
+        <div id="snark" class="muted"></div>
+      </div>
+
+
+
+<div class="row" id="shareBtnWrapper" hidden>
+  <label>&nbsp;</label>
+  <button class="btn" id="shareBtn">Save as Meme Card 📸</button>
+</div>
+
+
+
+    </main>
+
+    <footer>
+      <span class="kbd">Disclaimer:</span> Body-weight calculations use generic averages. It’s a TOY, not a CARDIOLOGIST.
+    </footer>
+  </div>
+
+  <script>
+    // --- Snack data (approx calories per serving) ---
+    const SNACKS = [
+      { name: "Chocolate bar (regular)", cal: 210 },
+      { name: "Potato chips (1 oz)", cal: 152 },
+      { name: "Doritos (1 oz)", cal: 150 },
+      { name: "Large fries", cal: 480 },
+      { name: "Soda (12 oz)", cal: 150 },
+      { name: "Energy drink (16 oz)", cal: 210 },
+      { name: "Cookie (choc chip)", cal: 160 },
+      { name: "Donut (glazed)", cal: 260 },
+      { name: "Ice cream (1 cup)", cal: 270 },
+      { name: "Protein bar", cal: 190 },
+      { name: "Granola bar", cal: 180 },
+      { name: "Peanut butter (2 tbsp)", cal: 190 },
+      { name: "Trail mix (1/4 cup)", cal: 175 },
+      { name: "Pretzels (1 oz)", cal: 110 },
+      { name: "Gummy candy (serving)", cal: 140 },
+      { name: "Cup noodles", cal: 290 },
+      { name: "Cheeseburger", cal: 300 },
+      { name: "Pizza slice (cheese)", cal: 285 },
+      { name: "Popcorn (movie small)", cal: 420 },
+      { name: "Milkshake (small)", cal: 530 },
+      { name: "Latte (16 oz, whole milk)", cal: 230 },
+      { name: "Bagel (plain)", cal: 250 },
+      { name: "Muffin (blueberry)", cal: 420 },
+      { name: "Cereal bowl", cal: 200 },
+      { name: "Yogurt (sweetened)", cal: 150 },
+      { name: "Nuggets (6pc)", cal: 270 },
+      { name: "Taco (beef)", cal: 170 },
+      { name: "Hot dog", cal: 290 },
+      { name: "Nachos (serving)", cal: 320 },
+      { name: "Peanuts (1 oz)", cal: 166 }
+    ];
+
+    // --- Exercise expenditure model (simple constants) ---
+    // Chosen for easy mental math, not lab-grade accuracy.
+    const EXERCISES = [
+      {
+        key: "pushups",
+        label: "pushups",
+        icon: "💪",
+        units: "reps",
+        caloriesPerUnit: 0.29 // cal per rep
+      },
+      {
+        key: "burpees",
+        label: "burpees",
+        icon: "🤸",
+        units: "reps",
+        caloriesPerUnit: 1.5 // cal per rep
+      },
+      {
+        key: "jumping_jacks",
+        label: "minutes of jumping jacks",
+        icon: "🕺",
+        units: "min",
+        caloriesPerUnit: 10 // cal per minute
+      },
+      {
+        key: "running",
+        label: "minutes of running (~6 mph)",
+        icon: "🏃",
+        units: "min",
+        caloriesPerUnit: 11 // cal per minute
+      },
+      {
+        key: "walking",
+        label: "minutes of brisk walking",
+        icon: "🚶",
+        units: "min",
+        caloriesPerUnit: 4.5 // cal per minute
+      },
+      {
+        key: "jump_rope",
+        label: "minutes of jump rope",
+        icon: "🪢",
+        units: "min",
+        caloriesPerUnit: 12 // cal per minute
+      },
+      {
+        key: "air_squats",
+        label: "air squats",
+        icon: "🏋️",
+        units: "reps",
+        caloriesPerUnit: 0.32 // cal per rep
+      }
+    ];
+
+    const SNARK = [
+      "Hydration is free. Regret isn’t.",
+      "You could also not eat it. Revolutionary, I know.",
+      "Pro tip: do both sides of your body.",
+      "Cardio now, fries later. Preferably much later.",
+      "This is why treadmills have cup holders.",
+      "Math doesn’t judge. I might.",
+      "One snack. Many consequences.",
+      "If your arms fall off, that’s on you."
+    ];
+
+    // --- DOM refs ---
+    const sel = (q) => document.querySelector(q);
+    
+    const quantityInput = sel("#quantity");
+
+    const snackSelect = sel("#snackSelect");
+    const snackText   = sel("#snackText");
+    const calInput    = sel("#calInput");
+    const convertBtn  = sel("#convertBtn");
+    const resultsBox  = sel("#results");
+    const summaryLine = sel("#summary");
+    const eqBox       = sel("#equivalents");
+    const chipsBox    = sel("#quickChips");
+    const snarkLine   = sel("#snark");
+
+
+
+
+
+
+
+// --- Share as Meme Card ---
+const shareBtnWrapper = document.getElementById("shareBtnWrapper");
+const shareBtn = document.getElementById("shareBtn");
+
+shareBtn.addEventListener("click", () => {
+  const resultsBox = document.getElementById("results");
+  html2canvas(resultsBox, { backgroundColor: "#131a22" }).then(canvas => {
+    // Create a download link
+    const link = document.createElement("a");
+    link.download = "snack2workout.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
+});
+
+// Show the button after conversion
+function showShareButton() {
+  shareBtnWrapper.hidden = false;
+}
+
+
+
+
+
+
+
+    // Populate dropdown and chips
+    function initSnacks() {
+      snackSelect.innerHTML = SNACKS
+        .map((s, i) => `<option value="${i}">${s.name} — ${s.cal} cal</option>`)
+        .join("");
+      // Default selection
+      snackSelect.selectedIndex = 0;
+      calInput.value = SNACKS[0].cal;
+
+      // Quick chips for popular items
+      const POPULAR = ["Large fries", "Pizza slice (cheese)", "Soda (12 oz)", "Donut (glazed)", "Chocolate bar (regular)", "Milkshake (small)"];
+      chipsBox.innerHTML = SNACKS.filter(s => POPULAR.includes(s.name))
+        .map(s => `<span class="chip" data-cal="${s.cal}" data-name="${s.name}">${s.name} • ${s.cal}</span>`)
+        .join("");
+    }
+
+    // Update calories when user selects a snack
+    snackSelect.addEventListener("change", () => {
+      const s = SNACKS[snackSelect.value];
+      if (s) {
+        if (!snackText.value.trim()) snackText.value = s.name;
+        calInput.value = s.cal;
+      }
+    });
+
+    // Quick chip click
+    chipsBox.addEventListener("click", (e) => {
+      const el = e.target.closest(".chip");
+      if (!el) return;
+      const name = el.getAttribute("data-name");
+      const cal  = Number(el.getAttribute("data-cal"));
+      snackText.value = name;
+      calInput.value  = cal;
+      // Try to align dropdown selection to this snack
+      const idx = SNACKS.findIndex(s => s.name === name);
+      if (idx >= 0) snackSelect.selectedIndex = idx;
+    });
+
+    // Core conversion
+    function convertCalories(calories) {
+      const outputs = [];
+      // Choose 4 varied exercises (mix reps and minutes)
+      const mix = pickVaried(EXERCISES, 4);
+      for (const ex of mix) {
+        const units = calories / ex.caloriesPerUnit;
+        const prettyUnits = ex.units === "reps" ? Math.ceil(units) : round1(units);
+        outputs.push({ ...ex, amount: prettyUnits });
+      }
+      return outputs;
+    }
+
+    function pickVaried(arr, n) {
+      const reps = arr.filter(a => a.units === "reps");
+      const mins = arr.filter(a => a.units === "min");
+      const picked = [];
+      if (reps.length) picked.push(reps[Math.floor(Math.random() * reps.length)]);
+      if (mins.length) picked.push(mins[Math.floor(Math.random() * mins.length)]);
+      const pool = arr.filter(a => !picked.includes(a));
+      while (picked.length < n && pool.length) {
+        const i = Math.floor(Math.random() * pool.length);
+        picked.push(pool.splice(i, 1)[0]);
+      }
+      return picked.slice(0, n);
+    }
+
+    function round1(x) { return Math.round(x * 10) / 10; }
+
+    function randomSnark() {
+      return SNARK[Math.floor(Math.random() * SNARK.length)];
+    }
+
+    // Render results
+    function render(snackName, calories, eqs) {
+      resultsBox.hidden = false;
+      summaryLine.innerHTML = `🍽️ <span class="muted">Your snack:</span> <b>${escapeHtml(snackName || "Mystery calories")}</b> = <b>${calories}</b> cal`;
+      eqBox.innerHTML = eqs.map(eq =>
+        `<div class="line">${eq.icon} <b>${eq.amount}</b> ${eq.label}</div>`
+      ).join("");
+      snarkLine.textContent = randomSnark();
+
+
+showShareButton();
+
+
+
+
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    // Button
+    convertBtn.addEventListener("click", () => {
+      const rawCal = Number(calInput.value);
+      const qty = Number(quantityInput.value) || 1;
+      const calories = isFinite(rawCal) && rawCal > 0 ? Math.round(rawCal * qty) : null;
+
+      if (!calories) {
+        alert("Enter a valid calorie number. Preferably not negative. Physics will complain.");
+        return;
+      }
+
+
+      const name = snackText.value.trim() || SNACKS[snackSelect.value]?.name || "Snack";
+      const eqs = convertCalories(calories);
+      render(name, calories, eqs);
+    });
+
+    // Init
+    initSnacks();
+  </script>
+</body>
+</html>
