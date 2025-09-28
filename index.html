@@ -96,11 +96,21 @@ label[for="snackText"] {
   display: block;     /* makes sure the margin applies cleanly */
 }
 
-    .logo {
-  height: 24px;       /* size it */
-  width: auto;        /* keep proportions */
-  border-radius: 8px; /* optional: rounded corners */
+/* Center the footer and make the logo bigger */
+footer {
+  padding: 16px 22px 22px;
+  color: var(--muted);
+  font-size: 14px;      /* text a little bigger */
+  text-align: center;   /* center everything inside footer */
 }
+
+footer .logo {
+  display: block;       /* makes the logo act like a block */
+  margin: 10px auto 0;  /* centers it and adds space above */
+  height: 60px;         /* size of logo (you can change this) */
+  width: auto;          /* keep proportions correct */
+}
+
 
 
   </style>
@@ -436,6 +446,7 @@ showShareButton();
   </script>
 </body>
 </html>
+
 
 
 
